@@ -10,6 +10,17 @@
 A responsive, modern currency converter web application developed as part of the CS2004 course on Agile Software Engineering and DevOps. This project demonstrates real-time currency conversion by integrating with ExchangeRate-API and features animated backgrounds, multi-page navigation, and modern design elements.
 
 ---
+<div align="center">
+<h2> 𝐇𝐞𝐥𝐥𝐨 𝐭𝐡𝐞𝐫𝐞, 𝐟𝐞𝐥𝐥𝐨𝐰 <𝚍𝚎𝚟𝚎𝚕𝚘𝚙𝚎𝚛𝚜/>! <img src="https://github.com/ABSphreak/ABSphreak/blob/master/gifs/Hi.gif" width="30"></h2>
+</div>
+
+<div align="center" width="50">
+
+<img src="https://i.imgur.com/dTYwdG1.gif" alt="Welcome!" width="300"/>
+
+</div>
+
+<div align="center">
 
 ## Overview in Table Format
 
