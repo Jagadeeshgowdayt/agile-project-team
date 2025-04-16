@@ -1,1 +1,202 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Currency Converter Project CS2004</title>
+  <!-- Link to the external CSS file -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="dark">
+  <!-- Overlay for readability -->
+  <div class="overlay"></div>
+  
+  <!-- Fallback for No JavaScript -->
+  <noscript>
+    <div style="padding:20px; background:#000; text-align:center; color:#fff;">
+      This application requires JavaScript.
+    </div>
+  </noscript>
+  
+  <!-- Modal for Team Member Details -->
+  <div id="teamModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal">Close</button>
+      <h3 id="modalName"></h3>
+      <p id="modalInfo"></p>
+    </div>
+  </div>
+  
+  <!-- Notification Area -->
+  <div id="notification" class="notification"></div>
+  
+  <div class="pages">
+    <!-- Home Page -->
+    <section id="home" class="page active">
+      <div class="home-container">
+        <h1>Currency Converter Project CS2004</h1>
+        <p>Agile Software Engineering and DevOps</p>
+        <h2>Meet the Team</h2>
+        <div class="credits-grid">
+          <div class="credit-card bounce" data-name="Adithya C" data-info="RV UNIVERSITY STUDENT<br>Computer Science Engineering<br>2nd Year, 4th Sem<br>Karnataka, Bangalore, India">
+            Adithya C
+          </div>
+          <div class="credit-card flip" data-name="Jagadeesh S" data-info="RV UNIVERSITY STUDENT<br>Computer Science Engineering<br>2nd Year, 4th Sem<br>Karnataka, Bangalore, India">
+            Jagadeesh S
+          </div>
+          <div class="credit-card zoom" data-name="Deepak R" data-info="RV UNIVERSITY STUDENT<br>Computer Science Engineering<br>2nd Year, 4th Sem<br>Karnataka, Bangalore, India">
+            Deepak R
+          </div>
+          <div class="credit-card slide" data-name="Sohan PM" data-info="RV UNIVERSITY STUDENT<br>Computer Science Engineering<br>2nd Year, 4th Sem<br>Karnataka, Bangalore, India">
+            Sohan PM
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Converter Page -->
+    <section id="converter" class="page">
+      <div class="card">
+        <h2>Currency Converter</h2>
+        <form id="converterForm">
+          <input type="number" id="amount" placeholder="Enter amount" required />
+          <select id="fromCurrency">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="INR">INR</option>
+            <option value="JPY">JPY</option>
+            <option value="AUD">AUD</option>
+            <option value="CAD">CAD</option>
+            <option value="CHF">CHF</option>
+            <option value="CNY">CNY</option>
+          </select>
+          <button type="button" id="swapButton">&#8646;</button>
+          <select id="toCurrency">
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+            <option value="GBP">GBP</option>
+            <option value="INR">INR</option>
+            <option value="JPY">JPY</option>
+            <option value="AUD">AUD</option>
+            <option value="CAD">CAD</option>
+            <option value="CHF">CHF</option>
+            <option value="CNY">CNY</option>
+          </select>
+          <button type="submit">Convert</button>
+        </form>
+        <div id="result" style="margin-top:15px; text-align:center;"></div>
+      </div>
+    </section>
+    
+    <!-- History Page -->
+    <section id="history" class="page">
+      <div class="history-container">
+        <h2>Conversion History</h2>
+        <ul class="history-list" id="historyList">
+          <li>10 USD = 9.50 EUR</li>
+          <li>50 EUR = 55.00 USD</li>
+          <li>100 USD = 95.00 EUR</li>
+        </ul>
+        <div class="history-summary" id="historySummary">
+          Total Conversions: 3
+        </div>
+      </div>
+    </section>
+    
+    <!-- Settings Page -->
+    <section id="settings" class="page">
+      <div class="settings-container">
+        <h2>Settings</h2>
+        <div class="settings-item">
+          <button id="toggleTheme">Toggle Theme</button>
+        </div>
+        <div class="settings-item">
+          <label>
+            <input type="checkbox" id="toggleNotifications" />
+            Enable Notifications
+          </label>
+        </div>
+        <div class="settings-item">
+          <label>
+            <input type="checkbox" id="toggleSound" />
+            Enable Sound
+          </label>
+        </div>
+        <div class="settings-item">
+          <label>
+            <input type="checkbox" id="toggleVibrations" />
+            Enable Vibrations
+          </label>
+        </div>
+        <div class="settings-item">
+          <label>
+            <input type="checkbox" id="showUsageTips" />
+            Show Usage Tips
+          </label>
+        </div>
+        <div class="settings-item">
+          <label>
+            <input type="checkbox" id="enableBetaFeatures" />
+            Enable Beta Features
+          </label>
+        </div>
+        <div class="settings-item">
+          <button id="clearHistory">Clear History</button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- About Page -->
+    <section id="about" class="page">
+      <div class="about-container">
+        <h2>About This Project</h2>
+        <p>
+          This Currency Converter Project is developed as part of the CS2004 - Agile Software Engineering and DevOps course.
+          It demonstrates real-time currency conversion by integrating with the ExchangeRate-API.
+        </p>
+        <p>
+          The project applies agile methodologies and DevOps principles to enable continuous integration and delivery.
+          For more details on currency conversion APIs, please refer to:
+        </p>
+        <p class="references">
+          <strong>ExchangeRate-API:</strong>
+          <a href="https://www.exchangerate-api.com/" target="_blank">https://www.exchangerate-api.com/</a>
+        </p>
+        <p class="references">
+          <strong>Open Exchange Rates:</strong>
+          <a href="https://openexchangerates.org/" target="_blank">https://openexchangerates.org/</a>
+        </p>
+        <h2>Team Members</h2>
+        <ul>
+          <li>
+            <strong>Adithya C</strong> – RV University Student, Computer Science Engineering, 2nd Year, 4th Sem, Karnataka, Bangalore, India.
+          </li>
+          <li>
+            <strong>Jagadeesh S</strong> – RV University Student, Computer Science Engineering, 2nd Year, 4th Sem, Karnataka, Bangalore, India.
+          </li>
+          <li>
+            <strong>Deepak R</strong> – RV University Student, Computer Science Engineering, 2nd Year, 4th Sem, Karnataka, Bangalore, India.
+          </li>
+          <li>
+            <strong>Sohan PM</strong> – RV University Student, Computer Science Engineering, 2nd Year, 4th Sem, Karnataka, Bangalore, India.
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+  
+  <!-- Navigation Bar -->
+  <nav>
+    <a href="#home" class="nav-link active" data-target="home">Home</a>
+    <a href="#converter" class="nav-link" data-target="converter">Convert</a>
+    <a href="#history" class="nav-link" data-target="history">History</a>
+    <a href="#settings" class="nav-link" data-target="settings">Settings</a>
+    <a href="#about" class="nav-link" data-target="about">About</a>
+  </nav>
+  
+  <!-- Link to the external JavaScript file -->
+  <script src="script.js"></script>
+</body>
+</html>
