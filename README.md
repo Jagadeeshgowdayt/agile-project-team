@@ -13,3 +13,17 @@
 <br><br>
 <img src="https://user-images.githubusercontent.com/74038190/219923809-b86dc415-a0c2-4a38-bc88-ad6cf06395a8.gif" width="500">
 <br><br>
+  About This Project
+This Currency Converter Project is developed as part of the CS2004 - Agile Software Engineering and DevOps course. It demonstrates real-time currency conversion by integrating with the ExchangeRate-API.
+
+The project applies agile methodologies and DevOps principles to enable continuous integration and delivery. For more details on currency conversion APIs, please refer to:
+
+ExchangeRate-API: https://www.exchangerate-api.com/
+
+Open Exchange Rates: https://openexchangerates.org/
+
+Team Members
+Adithya C – RV University Student, Computer Science Engineering, 2nd Year, 4th Sem, Karnataka, Bangalore, India.
+Jagadeesh S – RV University Student, Computer Science Engineering, 2nd Year, 4th Sem, Karnataka, Bangalore, India.
+Deepak R – RV University Student, Computer Science Engineering, 2nd Year, 4th Sem, Karnataka, Bangalore, India.
+Sohan PM – RV University Student, Computer Science Engineering, 2nd Year, 4th Sem, Karnataka, Bangalore, India.
