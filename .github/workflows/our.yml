@@ -1,17 +1,28 @@
-name: Simple Workflow
+name: Run Simple Tests
 
 on:
   push:
     branches:
-      - main  # You can change this to your default branch name
+      - main
 
 jobs:
-  hello-world:
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Say Hello
-        run: echo "Hello, World!"
+      - name: Run dummy test cases
+        run: |
+          echo "Running Test 1..."
+          echo "✅ Test 1 passed"
+          
+          echo "Running Test 2..."
+          echo "✅ Test 2 passed"
+          
+          echo "Running Test 3..."
+          echo "✅ Test 3 passed"
+
+      - name: All tests passed
+        run: echo "🎉 All tests completed successfully!"
