@@ -1,0 +1,38 @@
+name: Lint HTML, CSS, and JS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install linters
+        run: |
+          npm install -g htmlhint stylelint eslint
+
+      - name: Lint HTML
+        run: htmlhint index.html
+
+      - name: Lint CSS
+        run: |
+          echo "/* stylelint config */" > .stylelintrc.json
+          echo '{ "rules": { "block-no-empty": true, "color-no-invalid-hex": true } }' >> .stylelintrc.json
+          stylelint style.css
+
+      - name: Lint JS
+        run: |
+          echo '{ "env": { "browser": true, "es2021": true }, "extends": "eslint:recommended" }' > .eslintrc.json
+          eslint script.js
