@@ -1,0 +1,21 @@
+name: 'HTML Preview'
+author: 'Pavitra Golchha | @pavi2410'
+description: 'Preview HTML page'
+inputs:
+  html_file:
+    description: 'The HTML file you want to preview, relative to the root of the repo'
+    required: true
+    default: 'index.html'
+  job_summary:
+    description: 'Prints a job summary with the link'
+    required: false
+    default: true
+outputs:
+  url:
+    description: 'The URL of the HTML file specific to this build'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+branding:
+  color: 'orange'
+  icon: 'eye'
