@@ -8,7 +8,7 @@
 # Currency Converter Project CS2004
 
 A responsive, modern currency converter web application developed as part of the CS2004 course on Agile Software Engineering and DevOps. This project demonstrates real-time currency conversion by integrating with ExchangeRate-API and features animated backgrounds, multi-page navigation, and modern design elements.
-
+.
 ---
 <div align="center">
 
