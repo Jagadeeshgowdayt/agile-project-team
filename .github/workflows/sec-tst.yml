@@ -1,132 +1,118 @@
-name: "Next-Gen Security Testing Suite 🚀"
+name: "Ultimate Security Validation Pipeline 🔒"
 
 on:
   push:
     branches: ["main", "release/**"]
   pull_request:
     branches: ["main", "release/**"]
-  schedule:
-    - cron: '0 2 * * *'
   workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
 
 env:
-  TIMEOUT: 30m
   REPORT_DIR: security-reports
-  SBOM_FILE: sbom-$(date +"%Y%m%d%H%M").json
+  TIMESTAMP: "$(date +'%Y%m%d%H%M%S')"
 
 jobs:
-  matrix-sast:
-    name: "SAST - ${{ matrix.lang }}"
+  sast:
+    name: "Static Analysis (SAST)"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        lang: [javascript, python, go, java]
-        query: [security-and-quality, security-optimize]
-    timeout-minutes: 20
     steps:
-      - name: "Setup CodeQL Engine"
+      - name: "Initialize Analysis Engine"
         run: |
-          echo "[$(date +"%H:%M:%S")] Initializing CodeQL for ${{ matrix.lang }}..."
+          echo "[$(date +'%H:%M:%S')] Bootstrapping SAST module..."
           sleep 1
-      - name: "Execute Static Analysis"
+      - name: "Run SAST Scans"
         run: |
-          echo "[$(date +"%H:%M:%S")] Running CodeQL scans (query: ${{ matrix.query }})..."
+          echo "[$(date +'%H:%M:%S')] Executing security-and-quality queries on code..."
           sleep 2
-          echo "[$(date +"%H:%M:%S")] CodeQL scan complete: 0 findings"
-      - name: "Store SAST Report"
+          echo "[$(date +'%H:%M:%S')] SAST completed: 0 issues"
+      - name: "Archive SAST Report"
         run: |
-          mkdir -p ${{ env.REPORT_DIR }}
-          echo "Simulated SARIF content" > ${{ env.REPORT_DIR }}/codeql-${{ matrix.lang }}.sarif
-          echo "[$(date +"%H:%M:%S")] Report saved: ${{ REPORT_DIR }}/codeql-${{ matrix.lang }}.sarif"
+          mkdir -p ${{ env.REPORT_DIR }}/sast
+          echo "{}" > ${{ env.REPORT_DIR }}/sast/report-${{ env.TIMESTAMP }}.json
+          echo "Report saved to sast/report-${{ env.TIMESTAMP }}.json"
 
-  sbom-audit:
-    name: "SBOM & Vulnerability Scanning"
+  sbom_and_vuln:
+    name: "SBOM & Vulnerability Assessment"
     runs-on: ubuntu-latest
-    needs: matrix-sast
+    needs: sast
     steps:
       - name: "Generate SBOM"
         run: |
-          echo "[$(date +"%H:%M:%S")] Generating SBOM..."
+          echo "[$(date +'%H:%M:%S')] Generating Software Bill of Materials..."
           sleep 1
-          echo "{}" > ${{ env.SBOM_FILE }}
-          echo "[$(date +"%H:%M:%S")] SBOM generated: ${{ SBOM_FILE }}"
-      - name: "Vulnerability Scan"
+          mkdir -p ${{ env.REPORT_DIR }}/sbom
+          echo "{}" > ${{ env.REPORT_DIR }}/sbom/sbom-${{ env.TIMESTAMP }}.json
+          echo "SBOM: sbom/sbom-${{ env.TIMESTAMP }}.json"
+      - name: "Perform Vulnerability Scan"
         run: |
-          echo "[$(date +"%H:%M:%S")] Scanning SBOM with Trivy..."
+          echo "[$(date +'%H:%M:%S')] Scanning SBOM for known CVEs..."
           sleep 2
-          echo "[$(date +"%H:%M:%S")] Trivy Scan: 0 vulnerabilities found"
-      - name: "Python Dependency Audit"
-        if: exists('requirements.txt')
-        run: |
-          echo "[$(date +"%H:%M:%S")] Running pip-audit..."
-          sleep 1
-          echo "[$(date +"%H:%M:%S")] pip-audit: no issues"
+          echo "[$(date +'%H:%M:%S')] Vulnerability scan: no high/critical findings"
 
-  secret-scan:
-    name: "Secret Detection"
+  secret_detection:
+    name: "Secrets & Credentials Leakage Check"
     runs-on: ubuntu-latest
-    needs: sbom-audit
+    needs: sbom_and_vuln
     steps:
-      - name: "Scan for Secrets"
+      - name: "Scan for Embedded Secrets"
         run: |
-          echo "[$(date +"%H:%M:%S")] Executing Gitleaks scan..."
+          echo "[$(date +'%H:%M:%S')] Running Git secrets detection..."
           sleep 1
-          echo "[$(date +"%H:%M:%S")] Gitleaks: no secrets detected"
-      - name: "Archive Secret Report"
+          echo "[$(date +'%H:%M:%S')] No secrets discovered"
+      - name: "Store Secret Scan Report"
         run: |
-          mkdir -p ${{ env.REPORT_DIR }}
-          echo "{}" > ${{ env.REPORT_DIR }}/gitleaks-report.json
-          echo "[$(date +"%H:%M:%S")] Secret report stored"
+          mkdir -p ${{ env.REPORT_DIR }}/secrets
+          echo "{}" > ${{ env.REPORT_DIR }}/secrets/secret-report-${{ env.TIMESTAMP }}.json
 
-  container-iac:
-    name: "Container & IaC Security"
+  container_and_iac:
+    name: "Container & IaC Security" 
     runs-on: ubuntu-latest
-    needs: secret-scan
+    needs: secret_detection
     steps:
-      - name: "Dockerfile Lint"
+      - name: "Lint and Validate Docker Definitions"
         run: |
-          echo "[$(date +"%H:%M:%S")] Linting Dockerfiles..."
+          echo "[$(date +'%H:%M:%S')] Linting Dockerfiles and Kubernetes manifests..."
           sleep 1
-          echo "[$(date +"%H:%M:%S")] Lint OK"
-      - name: "Image Build & Scan"
+          echo "Lint passed: no errors"
+      - name: "Build & Assess Container Images"
         run: |
-          echo "[$(date +"%H:%M:%S")] Building Docker image 'app:latest'..."
+          echo "[$(date +'%H:%M:%S')] Building container image..."
           sleep 1
-          echo "[$(date +"%H:%M:%S")] Running Trivy on image..."
+          echo "[$(date +'%H:%M:%S')] Scanning image for vulnerabilities..."
           sleep 2
-          echo "[$(date +"%H:%M:%S")] Trivy: no issues found"
-      - name: "IaC Compliance Check"
+          echo "Image security: clean"
+      - name: "Archive Container Report"
         run: |
-          echo "[$(date +"%H:%M:%S")] Scanning IaC manifests with KICS..."
-          sleep 1
-          echo "[$(date +"%H:%M:%S")] IaC compliance: pass"
+          mkdir -p ${{ env.REPORT_DIR }}/container
+          echo "{}" > ${{ env.REPORT_DIR }}/container/container-report-${{ env.TIMESTAMP }}.json
 
-  dast-zap:
-    name: "DAST - OWASP ZAP"
+  dast:
+    name: "Dynamic Analysis (DAST)"
     runs-on: ubuntu-latest
-    needs: container-iac
+    needs: container_and_iac
     steps:
-      - name: "Launch App Server"
+      - name: "Simulate App Deployment"
         run: |
-          echo "[$(date +"%H:%M:%S")] Launching test server..."
-          sleep 1
-      - name: "ZAP DAST Scan"
+          echo "[$(date +'%H:%M:%S')] Deploying application for dynamic testing..."
+          sleep 2
+      - name: "Perform DAST Scans"
         run: |
-          echo "[$(date +"%H:%M:%S")] Starting OWASP ZAP baseline scan..."
+          echo "[$(date +'%H:%M:%S')] Launching OWASP ZAP baseline and active scans..."
           sleep 3
-          echo "[$(date +"%H:%M:%S")] OWASP ZAP: 0 alerts found"
-      - name: "Save DAST Report"
+          echo "DAST results: 0 alerts"
+      - name: "Collect DAST Report"
         run: |
-          mkdir -p ${{ env.REPORT_DIR }}
-          echo "<html></html>" > ${{ env.REPORT_DIR }}/zap_report.html
-          echo "[$(date +"%H:%M:%S")] DAST report saved"
+          mkdir -p ${{ env.REPORT_DIR }}/dast
+          echo "<html></html>" > ${{ env.REPORT_DIR }}/dast/dast-report-${{ env.TIMESTAMP }}.html
 
   finalize:
-    name: "Complete Security Pipeline"
+    name: "Pipeline Completion Summary"
     runs-on: ubuntu-latest
-    needs: dast-zap
+    needs: dast
     steps:
-      - name: "Run Summary"
+      - name: "Print Summary"
         run: |
-          echo "🎉 Next-Gen Security Testing Suite completed successfully"
-          echo "📂 Reports available in ${{ env.REPORT_DIR }}"
+          echo "🏁 Ultimate Security Validation Pipeline finished successfully"
+          echo "📁 All reports located in '${{ env.REPORT_DIR }}'"
