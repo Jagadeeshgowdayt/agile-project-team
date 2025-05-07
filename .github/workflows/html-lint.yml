@@ -1,0 +1,24 @@
+# .github/workflows/html-lint.yml
+name: HTML Lint Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-html:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Super‑Linter (HTML only)
+        uses: github/super-linter@v5
+        env:
+          VALIDATE_HTML: true
+          VALIDATE_CSS: false
+          VALIDATE_JS: false
+          VALIDATE_YAML: false
+          VALIDATE_MARKDOWN: false
+          VALIDATE_XML: false
