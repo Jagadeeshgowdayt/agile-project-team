@@ -1,0 +1,127 @@
+name: "Advanced Security Testing Workflow"
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  codeql-analysis:
+    name: "SAST with CodeQL"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [javascript, python, go]
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+
+      - name: "Initialize CodeQL"
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: "Perform CodeQL Analysis"
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "${{ matrix.language }}"
+
+  dependency-sbom-and-audit:
+    name: "SBOM Generation & Dependency Audit"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+
+      - name: "Generate SBOM with Syft"
+        uses: anchore/syft-action@v0.1.0
+        with:
+          output: "sbom.sbom.json"
+
+      - name: "Upload SBOM"
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: sbom.sbom.json
+
+      - name: "Run Trivy Scan"
+        uses: aquasecurity/trivy-action@master
+        with:
+          format: 'json'
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+
+      - name: "Run pip-audit"
+        if: exists('requirements.txt')
+        run: |
+          pip install pip-audit
+          pip-audit --strict --format json > pip_audit.json
+          cat pip_audit.json
+
+  secret-scanning:
+    name: "Gitleaks Secret Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+
+      - name: "Run Gitleaks"
+        uses: zricethezav/gitleaks-action@v1.3.0
+        with:
+          config_path: .gitleaks.toml
+          verbose: true
+
+  docker-security:
+    name: "Container & IaC Security"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+
+      - name: "Lint Dockerfile"
+        uses: dockerfilelint/dockerfilelint@v5
+
+      - name: "Scan Docker Image with Trivy"
+        run: |
+          docker build -t myapp:latest .
+          trivy image --severity HIGH,CRITICAL myapp:latest
+
+      - name: "IaC Scan with KICS"
+        uses: checkmarx/kics-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  dast-owasp-zap:
+    name: "DAST with OWASP ZAP"
+    runs-on: ubuntu-latest
+    services:
+      zap:
+        image: owasp/zap2docker-stable
+        ports:
+          - "8080:8080"
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+
+      - name: "Start Application"
+        run: |
+          python3 -m http.server 8000 & APP_PID=$! && sleep 2
+
+      - name: "Run ZAP Attack Mode"
+        run: |
+          zap-cli --zap-url http://localhost --zap-port 8080 open-url http://localhost:8000
+          zap-cli --zap-url http://localhost --zap-port 8080 spider http://localhost:8000
+          zap-cli --zap-url http://localhost --zap-port 8080 active-scan http://localhost:8000
+          zap-cli --zap-url http://localhost --zap-port 8080 report -o zap_report.html -f html
+
+      - name: "Upload ZAP Report"
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-report
+          path: zap_report.html
+
+      - name: "Stop Application"
+        if: always()
+        run: kill $APP_PID
