@@ -1,0 +1,22 @@
+# .github/workflows/sanity-check.yml
+name: Sanity Check
+
+on:
+  workflow_dispatch:    # allow manual runs
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  sanity:
+    name: Sanity check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Sanity step
+        run: |
+          echo "Everything’s wired up correctly!"
