@@ -1,0 +1,52 @@
+# Simple Load Testing Workflow Using curl
+# No external tools required
+
+name: "HTML Load Test Workflow"
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  load-test:
+    name: "Basic Load Test"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v3
+
+      - name: "Start a simple HTTP server"
+        run: |
+          # Serve the current directory on port 8000
+          python3 -m http.server 8000 &
+          SERVER_PID=$!
+          sleep 2
+
+      - name: "Run load test with curl"
+        run: |
+          URL="http://localhost:8000/index.html"
+          echo "Running 200 requests in 50 concurrent threads against $URL"
+
+          # Spawn 50 background threads, each sending 4 requests
+          for i in {1..50}; do
+            (
+              for j in {1..4}; do
+                curl -o /dev/null -s -w "%{time_total}\n" "$URL"
+              done
+            ) &
+          done
+
+          # Wait for all curls to finish and collect timings
+          wait > times.log
+
+          # Calculate stats: total requests, average, min, max response times
+          echo "Load Test Results:" 
+          awk '{sum+=$1; count+=1; if(NR==1||$1<min) min=$1; if(NR==1||$1>max) max=$1} END {printf "Requests: %d\nAverage: %.3f s\nMin: %.3f s\nMax: %.3f s\n", count, sum/count, min, max}' times.log
+
+      - name: "Stop HTTP server"
+        if: always()
+        run: |
+          kill $SERVER_PID || true
