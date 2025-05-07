@@ -1,4 +1,4 @@
-name: " Performance Testing 008 🚀"
+name: " Performance Testing 008🚀"
 
 on:
   push:
@@ -34,6 +34,7 @@ jobs:
           echo "[$(date +'%H:%M:%S')] Running synthetic performance tests for ${{ matrix.device }} in ${{ matrix.location }}..."
           sleep 2
           # Simulated metrics
+          mkdir -p ${{ env.REPORT_DIR }}
           echo "{
             \"device\": \"${{ matrix.device }}\",
             \"location\": \"${{ matrix.location }}\",
@@ -50,7 +51,7 @@ jobs:
           kill $SERVER_PID || true
 
       - name: "Upload Metrics Report"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: perf-${{ matrix.device }}-${{ matrix.location }}-${{ env.TIMESTAMP }}
           path: ${{ env.REPORT_DIR }}/metrics-${{ matrix.device }}-${{ matrix.location }}-${{ env.TIMESTAMP }}.json
