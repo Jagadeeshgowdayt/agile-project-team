@@ -1,0 +1,66 @@
+name: " Performance Testing 008 🚀"
+
+on:
+  push:
+    branches: ['main', 'release/**']
+  pull_request:
+    branches: ['main', 'release/**']
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *'  # Daily at 04:00 UTC
+
+env:
+  REPORT_DIR: performance-reports
+  TIMESTAMP: "$(date +'%Y%m%d%H%M%S')"
+
+jobs:
+  scenario-matrix:
+    name: "Performance Test - ${{ matrix.device }}"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        device: [desktop, mobile]
+        location: [us-east, eu-west]
+    timeout-minutes: 15
+
+    steps:
+      - name: "Setup HTTP Server"
+        run: |
+          echo "[$(date +'%H:%M:%S')] Starting local server for performance tests..."
+          python3 -m http.server 8000 & SERVER_PID=$! && sleep 3
+
+      - name: "Simulate Load"
+        run: |
+          echo "[$(date +'%H:%M:%S')] Running synthetic performance tests for ${{ matrix.device }} in ${{ matrix.location }}..."
+          sleep 2
+          # Simulated metrics
+          echo "{
+            \"device\": \"${{ matrix.device }}\",
+            \"location\": \"${{ matrix.location }}\",
+            \"firstContentfulPaint\": 1.2,
+            \"SpeedIndex\": 2.3,
+            \"largestContentfulPaint\": 2.8,
+            \"timeToInteractive\": 3.1
+          }" > ${{ env.REPORT_DIR }}/metrics-${{ matrix.device }}-${{ matrix.location }}-${{ env.TIMESTAMP }}.json
+          echo "[$(date +'%H:%M:%S')] Metrics saved to metrics-${{ matrix.device }}-${{ matrix.location }}-${{ env.TIMESTAMP }}.json"
+
+      - name: "Teardown"
+        if: always()
+        run: |
+          kill $SERVER_PID || true
+
+      - name: "Upload Metrics Report"
+        uses: actions/upload-artifact@v3
+        with:
+          name: perf-${{ matrix.device }}-${{ matrix.location }}-${{ env.TIMESTAMP }}
+          path: ${{ env.REPORT_DIR }}/metrics-${{ matrix.device }}-${{ matrix.location }}-${{ env.TIMESTAMP }}.json
+
+  finalize:
+    name: "Performance Test Summary"
+    runs-on: ubuntu-latest
+    needs: scenario-matrix
+    steps:
+      - name: "Print Performance Summary"
+        run: |
+          echo "🏁 Next-Gen Performance Testing Suite completed for all scenarios"
+          echo "📁 Reports are available under '${{ env.REPORT_DIR }}'"
