@@ -2,24 +2,27 @@
 name: HTML Lint Check
 
 on:
-  workflow_dispatch:    # ← NEW: enables gh workflow run
+  workflow_dispatch:      # ← allows manual ‘gh workflow run’
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read          # needed to checkout code
+  checks: write           # needed for Super‑Linter to post statuses
+
 jobs:
   lint-html:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # ← provide the token
     steps:
       - uses: actions/checkout@v3
 
       - name: Run Super‑Linter (HTML only)
         uses: github/super-linter@v5
         env:
+          # only set the one linter you want
           VALIDATE_HTML: true
-          VALIDATE_CSS: false
-          VALIDATE_JS: false
-          VALIDATE_YAML: false
-          VALIDATE_MARKDOWN: false
-          VALIDATE_XML: false
+          # do NOT set other VALIDATE_* flags when including
