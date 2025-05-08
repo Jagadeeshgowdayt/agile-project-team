@@ -1,118 +1,104 @@
-name: "Ultimate Security Validation Pipeline 🔒"
+name: "Frontend CI & Realistic Functionality & Performance Tests"
 
 on:
   push:
-    branches: ["main", "release/**"]
+    branches: ['main', 'release/**']
   pull_request:
-    branches: ["main", "release/**"]
+    branches: ['main', 'release/**']
   workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * *'
-
-env:
-  REPORT_DIR: security-reports
-  TIMESTAMP: "$(date +'%Y%m%d%H%M%S')"
 
 jobs:
-  sast:
-    name: "Static Analysis (SAST)"
+  html-functionality:
+    name: "HTML Functionality Tests"
     runs-on: ubuntu-latest
     steps:
-      - name: "Initialize Analysis Engine"
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+
+      - name: "Run Title & H1 Checks"
         run: |
-          echo "[$(date +'%H:%M:%S')] Bootstrapping SAST module..."
-          sleep 1
-      - name: "Run SAST Scans"
+          FILES=$(find . -maxdepth 1 -type f -name '*.html')
+          for f in $FILES; do
+            echo "Checking $f..."
+            grep -q '<title>.*</title>' "$f" || { echo "❌ Missing <title> in $f"; exit 1; }
+            grep -q '<h1>' "$f" || { echo "❌ Missing <h1> in $f"; exit 1; }
+          done
+
+      - name: "Verify Image Alt Attributes"
         run: |
-          echo "[$(date +'%H:%M:%S')] Executing security-and-quality queries on code..."
+          for f in $FILES; do
+            IMG_TAGS=$(grep -o '<img[^>]*>' "$f")
+            if [ -n "$IMG_TAGS" ]; then
+              echo "$IMG_TAGS" | grep -q 'alt=' || { echo "❌ Missing alt attribute on an <img> in $f"; exit 1; }
+            fi
+          done
+
+      - name: "Check Form Actions"
+        run: |
+          for f in $FILES; do
+            FORM_TAGS=$(grep -o '<form[^>]*>' "$f")
+            if [ -n "$FORM_TAGS" ]; then
+              echo "$FORM_TAGS" | grep -q 'action=' || { echo "❌ Missing action attribute on <form> in $f"; exit 1; }
+            fi
+          done
+
+  js-lint:
+    name: "JavaScript Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: "Configure JSHint for ES6"
+        run: |
+          echo '{"esversion": 6}' > .jshintrc
+          cat .jshintrc
+
+      - name: "Install JSHint"
+        run: npm install -g jshint
+
+      - name: "Run JSHint"
+        run: |
+          FILES=$(find . -type f -name '*.js' | grep -v 'node_modules')
+          if [ -n "$FILES" ]; then
+            jshint $FILES;
+          else
+            echo "No JS files to lint";
+          fi
+
+  perf-test:
+    name: "Performance Test"
+    runs-on: ubuntu-latest
+    needs: [html-functionality, js-lint]
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v3
+
+      - name: "Start HTTP server"
+        run: |
+          echo "Starting HTTP server on port 8000..."
+          python3 -m http.server 8000 & echo $! > server.pid
           sleep 2
-          echo "[$(date +'%H:%M:%S')] SAST completed: 0 issues"
-      - name: "Archive SAST Report"
-        run: |
-          mkdir -p ${{ env.REPORT_DIR }}/sast
-          echo "{}" > ${{ env.REPORT_DIR }}/sast/report-${{ env.TIMESTAMP }}.json
-          echo "Report saved to sast/report-${{ env.TIMESTAMP }}.json"
 
-  sbom_and_vuln:
-    name: "SBOM & Vulnerability Assessment"
-    runs-on: ubuntu-latest
-    needs: sast
-    steps:
-      - name: "Generate SBOM"
+      - name: "Measure Response Times"
         run: |
-          echo "[$(date +'%H:%M:%S')] Generating Software Bill of Materials..."
-          sleep 1
-          mkdir -p ${{ env.REPORT_DIR }}/sbom
-          echo "{}" > ${{ env.REPORT_DIR }}/sbom/sbom-${{ env.TIMESTAMP }}.json
-          echo "SBOM: sbom/sbom-${{ env.TIMESTAMP }}.json"
-      - name: "Perform Vulnerability Scan"
-        run: |
-          echo "[$(date +'%H:%M:%S')] Scanning SBOM for known CVEs..."
-          sleep 2
-          echo "[$(date +'%H:%M:%S')] Vulnerability scan: no high/critical findings"
+          URL="http://localhost:8000/index.html"
+          echo "Measuring response times for $URL"
+          for i in {1..5}; do
+            curl -o /dev/null -s -w "Request $i: %{time_total}s\n" "$URL";
+          done
 
-  secret_detection:
-    name: "Secrets & Credentials Leakage Check"
-    runs-on: ubuntu-latest
-    needs: sbom_and_vuln
-    steps:
-      - name: "Scan for Embedded Secrets"
+      - name: "Stop HTTP server"
+        if: always()
         run: |
-          echo "[$(date +'%H:%M:%S')] Running Git secrets detection..."
-          sleep 1
-          echo "[$(date +'%H:%M:%S')] No secrets discovered"
-      - name: "Store Secret Scan Report"
-        run: |
-          mkdir -p ${{ env.REPORT_DIR }}/secrets
-          echo "{}" > ${{ env.REPORT_DIR }}/secrets/secret-report-${{ env.TIMESTAMP }}.json
+          PID=$(cat server.pid)
+          echo "Stopping server process $PID"
+          kill $PID || true
 
-  container_and_iac:
-    name: "Container & IaC Security" 
-    runs-on: ubuntu-latest
-    needs: secret_detection
-    steps:
-      - name: "Lint and Validate Docker Definitions"
-        run: |
-          echo "[$(date +'%H:%M:%S')] Linting Dockerfiles and Kubernetes manifests..."
-          sleep 1
-          echo "Lint passed: no errors"
-      - name: "Build & Assess Container Images"
-        run: |
-          echo "[$(date +'%H:%M:%S')] Building container image..."
-          sleep 1
-          echo "[$(date +'%H:%M:%S')] Scanning image for vulnerabilities..."
-          sleep 2
-          echo "Image security: clean"
-      - name: "Archive Container Report"
-        run: |
-          mkdir -p ${{ env.REPORT_DIR }}/container
-          echo "{}" > ${{ env.REPORT_DIR }}/container/container-report-${{ env.TIMESTAMP }}.json
-
-  dast:
-    name: "Dynamic Analysis (DAST)"
-    runs-on: ubuntu-latest
-    needs: container_and_iac
-    steps:
-      - name: "Simulate App Deployment"
-        run: |
-          echo "[$(date +'%H:%M:%S')] Deploying application for dynamic testing..."
-          sleep 2
-      - name: "Perform DAST Scans"
-        run: |
-          echo "[$(date +'%H:%M:%S')] Launching OWASP ZAP baseline and active scans..."
-          sleep 3
-          echo "DAST results: 0 alerts"
-      - name: "Collect DAST Report"
-        run: |
-          mkdir -p ${{ env.REPORT_DIR }}/dast
-          echo "<html></html>" > ${{ env.REPORT_DIR }}/dast/dast-report-${{ env.TIMESTAMP }}.html
-
-  finalize:
-    name: "Pipeline Completion Summary"
-    runs-on: ubuntu-latest
-    needs: dast
-    steps:
-      - name: "Print Summary"
-        run: |
-          echo "🏁 Ultimate Security Validation Pipeline finished successfully"
-          echo "📁 All reports located in '${{ env.REPORT_DIR }}'"
+      - name: "Finalize"
+        run: echo "Frontend CI & Functionality & Performance Tests completed successfully"
