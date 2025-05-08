@@ -33,16 +33,17 @@ jobs:
       - name: "Checkout code"
         uses: actions/checkout@v3
 
-      - name: "Setup Node.js"
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
       - name: "Install csslint"
         run: npm install -g csslint
 
       - name: "Run csslint"
-        run: csslint "**/*.css"
+        run: |
+          CSS_FILES=$(find . -type f -name '*.css')
+          if [ -n "$CSS_FILES" ]; then
+            echo "$CSS_FILES" | xargs csslint;
+          else
+            echo "No CSS files to lint";
+          fi
 
   js-lint:
     name: "JavaScript Lint"
