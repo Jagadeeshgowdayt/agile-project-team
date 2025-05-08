@@ -1,4 +1,4 @@
-name: "Frontend CI & Performance Tests"
+name: "Frontend CI & Performance Test 008"
 
 on:
   push:
