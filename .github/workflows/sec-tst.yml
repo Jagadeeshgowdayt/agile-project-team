@@ -1,4 +1,4 @@
-name: "Basic Security Validation Workflow"
+name: "HTML Security test"
 
 on:
   push:
