@@ -64,7 +64,9 @@ jobs:
 
       - name: "Start HTTP server"
         run: |
-          python3 -m http.server 8000 & SERVER_PID=$! && sleep 2
+          echo "Starting HTTP server on port 8000..."
+          python3 -m http.server 8000 & echo $! > server.pid
+          sleep 2
 
       - name: "Measure response times"
         run: |
@@ -76,7 +78,10 @@ jobs:
 
       - name: "Stop HTTP server"
         if: always()
-        run: kill $SERVER_PID
+        run: |
+          PID=$(cat server.pid)
+          echo "Stopping server process $PID"
+          kill $PID || true
 
       - name: "Finalize"
         run: echo "Frontend CI & Performance Tests completed successfully"
