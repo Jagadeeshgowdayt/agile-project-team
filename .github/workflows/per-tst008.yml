@@ -56,6 +56,11 @@ jobs:
         with:
           node-version: '16'
 
+      - name: "Configure JSHint for ES6"
+        run: |
+          echo '{"esversion": 6}' > .jshintrc
+          cat .jshintrc
+
       - name: "Install jshint"
         run: npm install -g jshint
 
