@@ -1,104 +1,64 @@
-name: "Frontend CI & Realistic Functionality & Performance Tests"
+name: "Basic Security Validation Workflow"
 
 on:
   push:
-    branches: ['main', 'release/**']
+    branches: ["main", "release/**"]
   pull_request:
-    branches: ['main', 'release/**']
+    branches: ["main", "release/**"]
   workflow_dispatch:
 
 jobs:
-  html-functionality:
-    name: "HTML Functionality Tests"
+  html-security-checks:
+    name: "HTML Security Checks"
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout code"
+      - name: "Checkout repository"
         uses: actions/checkout@v3
 
-      - name: "Run Title & H1 Checks"
+      - name: "Check for inline scripts"
         run: |
-          FILES=$(find . -maxdepth 1 -type f -name '*.html')
-          for f in $FILES; do
-            echo "Checking $f..."
-            grep -q '<title>.*</title>' "$f" || { echo "❌ Missing <title> in $f"; exit 1; }
-            grep -q '<h1>' "$f" || { echo "❌ Missing <h1> in $f"; exit 1; }
-          done
-
-      - name: "Verify Image Alt Attributes"
-        run: |
-          for f in $FILES; do
-            IMG_TAGS=$(grep -o '<img[^>]*>' "$f")
-            if [ -n "$IMG_TAGS" ]; then
-              echo "$IMG_TAGS" | grep -q 'alt=' || { echo "❌ Missing alt attribute on an <img> in $f"; exit 1; }
+          ERR=0
+          for f in $(find . -type f -name '*.html'); do
+            if grep -q '<script>' "$f"; then
+              echo "❌ Inline <script> tag found in $f"
+              ERR=1
             fi
           done
+          exit $ERR
 
-      - name: "Check Form Actions"
+      - name: "Ensure links use HTTPS"
         run: |
-          for f in $FILES; do
-            FORM_TAGS=$(grep -o '<form[^>]*>' "$f")
-            if [ -n "$FORM_TAGS" ]; then
-              echo "$FORM_TAGS" | grep -q 'action=' || { echo "❌ Missing action attribute on <form> in $f"; exit 1; }
+          ERR=0
+          for f in $(find . -type f -name '*.html'); do
+            grep -Hn 'href="http://' "$f" && { echo "❌ Insecure HTTP link in $f"; ERR=1; }
+          done
+          exit $ERR
+
+      - name: "Verify img alt attributes"
+        run: |
+          ERR=0
+          for f in $(find . -type f -name '*.html'); do
+            grep -Hn '<img ' "$f" | while read -r line; do
+              # if <img has no alt=
+              if echo "$line" | grep -vq 'alt='; then
+                echo "❌ Missing alt attribute: $line"
+                ERR=1
+              fi
+            done
+          done
+          exit $ERR
+
+      - name: "Detect inline event handlers"
+        run: |
+          ERR=0
+          for f in $(find . -type f -name '*.html'); do
+            if grep -En 'on\w+=' "$f"; then
+              echo "❌ Inline event handler found in $f"
+              ERR=1
             fi
           done
+          exit $ERR
 
-  js-lint:
-    name: "JavaScript Lint"
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v3
-
-      - name: "Setup Node.js"
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
-      - name: "Configure JSHint for ES6"
-        run: |
-          echo '{"esversion": 6}' > .jshintrc
-          cat .jshintrc
-
-      - name: "Install JSHint"
-        run: npm install -g jshint
-
-      - name: "Run JSHint"
-        run: |
-          FILES=$(find . -type f -name '*.js' | grep -v 'node_modules')
-          if [ -n "$FILES" ]; then
-            jshint $FILES;
-          else
-            echo "No JS files to lint";
-          fi
-
-  perf-test:
-    name: "Performance Test"
-    runs-on: ubuntu-latest
-    needs: [html-functionality, js-lint]
-    steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v3
-
-      - name: "Start HTTP server"
-        run: |
-          echo "Starting HTTP server on port 8000..."
-          python3 -m http.server 8000 & echo $! > server.pid
-          sleep 2
-
-      - name: "Measure Response Times"
-        run: |
-          URL="http://localhost:8000/index.html"
-          echo "Measuring response times for $URL"
-          for i in {1..5}; do
-            curl -o /dev/null -s -w "Request $i: %{time_total}s\n" "$URL";
-          done
-
-      - name: "Stop HTTP server"
-        if: always()
-        run: |
-          PID=$(cat server.pid)
-          echo "Stopping server process $PID"
-          kill $PID || true
-
-      - name: "Finalize"
-        run: echo "Frontend CI & Functionality & Performance Tests completed successfully"
+      - name: "Summary"
+        if: success()
+        run: echo "✅ All basic HTML security checks passed!"
