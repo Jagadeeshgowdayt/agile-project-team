@@ -17,49 +17,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Start simple HTTP server 🌐
-        run: |
-          python3 -m http.server 8000 &
-          sleep 3  # wait for server
-
       - name: Safe Resource Size Check 🗂️
         run: |
-          set +e  # continue on errors
-          echo "Checking JS/CSS resource sizes..."
-          for FILE in $(find . -maxdepth 1 -name '*.js' -o -name '*.css'); do
+          set +e
+          echo "🔍 Checking JS/CSS resource sizes..."
+          for FILE in $(find . -name '*.js' -o -name '*.css'); do
             [ -f "$FILE" ] || continue
             SIZE_KB=$(du -k "$FILE" | cut -f1)
-            echo "$FILE: ${SIZE_KB}KB"
+            echo "📦 $FILE: ${SIZE_KB}KB"
             if [ "$SIZE_KB" -gt 100 ]; then
-              echo "🔔 $FILE is larger than 100KB."
+              echo "⚠️ $FILE is larger than 100KB."
             fi
           done
 
       - name: Safe Image Size Check 📷
         run: |
           set +e
-          echo "Checking image sizes..."
-          for IMG in $(find . -maxdepth 1 -name '*.png' -o -name '*.jpg' -o -name '*.jpeg'); do
+          echo "🔍 Checking image sizes..."
+          for IMG in $(find . -name '*.png' -o -name '*.jpg' -o -name '*.jpeg'); do
             [ -f "$IMG" ] || continue
             IMG_SIZE_KB=$(du -k "$IMG" | cut -f1)
-            echo "$IMG: ${IMG_SIZE_KB}KB"
+            echo "🖼️ $IMG: ${IMG_SIZE_KB}KB"
             if [ "$IMG_SIZE_KB" -gt 300 ]; then
-              echo "🔔 Large image detected: $IMG"
+              echo "⚠️ Large image detected: $IMG"
             fi
           done
 
       - name: Check for Minification (CSS/JS) ⚙️
         run: |
           set +e
-          echo "Checking for minified assets..."
+          echo "🔍 Checking for minified assets..."
           for FILE in *.css *.js; do
             [ -f "$FILE" ] || continue
-            if ! grep -q "min\." "$FILE"; then
-              echo "🔔 $FILE may not be minified."
+            if ! grep -q "min\\." "$FILE"; then
+              echo "⚠️ $FILE may not be minified."
             fi
           done
 
       - name: Forced Success 🤖
         run: |
-          echo "✅ All checks completed. No errors will stop this workflow."
+          echo "✅ All checks completed safely. Workflow passes no matter what!"
           exit 0
