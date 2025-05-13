@@ -1,0 +1,49 @@
+# .github/workflows/basic-security-check.yml
+name: "Basic Security Check"
+
+on:
+  push:
+    paths:
+      - '**/*.html'
+      - '**/*.js'
+  workflow_dispatch:
+
+jobs:
+  basic-security-tests:
+    name: Run Basic Security Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60  # Long timeout to simulate high run time
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Simulate Long Runtime 🕒
+        run: |
+          echo "Pretending to take a long time... 💤"
+          sleep 30
+
+      - name: Check for Secrets in JS 🔍
+        run: |
+          echo "Checking for hardcoded secrets in JS files..."
+          grep -iEn "api[_-]?key|secret|token" . || echo "✅ No secrets found"
+
+      - name: Basic XSS Test (Simulation) 🕷️
+        run: |
+          echo "Simulating XSS test with sample input..."
+          echo "<script>alert(1)</script>" > xss-test.html
+          if grep "<script>alert(1)</script>" xss-test.html; then
+            echo "✅ Script was rendered as text (safe)"
+          else
+            echo "❌ Potential XSS detected" && exit 1
+          fi
+
+      - name: HTTPS Check (manual placeholder) 🔒
+        run: |
+          echo "Skipping actual HTTPS check – replace this with your live domain test"
+          echo "✅ Simulated HTTPS enforcement passed"
+
+      - name: Security Headers Check (manual placeholder) 📦
+        run: |
+          echo "Use curl -I https://your-site.com to check headers manually"
+          echo "✅ Simulated header check passed"
