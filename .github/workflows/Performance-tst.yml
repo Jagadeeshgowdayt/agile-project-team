@@ -24,11 +24,8 @@ steps:
           echo "⚠️ $FILE is larger than 100KB." >> warnings.txt
         fi
       done
-      # simulate work
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: Image Size Check 🖼️
     run: |
@@ -42,9 +39,7 @@ steps:
         fi
       done
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: HTML File Size Check 📄
     run: |
@@ -58,9 +53,7 @@ steps:
         fi
       done
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: Inline JS/CSS Check 📝
     run: |
@@ -70,9 +63,7 @@ steps:
       [ -n "$INLINE_JS" ] && echo "⚠️ Inline <script> found." >> warnings.txt
       [ -n "$INLINE_CSS" ] && echo "⚠️ Inline style attribute found." >> warnings.txt
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: Minification Check ⚙️
     run: |
@@ -84,9 +75,7 @@ steps:
         fi
       done
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: Script Tag defer/async Check ⚡
     run: |
@@ -94,9 +83,7 @@ steps:
       MISSING=$(grep -R "<script" . | grep -vE "defer|async" || true)
       [ -n "$MISSING" ] && echo "⚠️ Some <script> tags missing defer/async." >> warnings.txt
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: console.log Check 🐞
     run: |
@@ -104,9 +91,7 @@ steps:
       LOGS=$(grep -R "console.log" . || true)
       [ -n "$LOGS" ] && echo "⚠️ console.log found in code." >> warnings.txt
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: DOM Size Check 🌳
     run: |
@@ -119,9 +104,7 @@ steps:
         echo "ℹ️ index.html not found; skipped DOM size check."
       fi
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: Memory Usage Estimate 🧠
     run: |
@@ -129,9 +112,7 @@ steps:
       MEM=$(node -e "const u=process.memoryUsage(); console.log(Math.round(u.heapUsed/1024/1024)+'MB');")
       echo "  • Heap used: $MEM"
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: Simulate CPU Load 🔄
     run: |
@@ -139,9 +120,7 @@ steps:
       timeout 30s bash -c "while :; do :; done" || true
       echo "  • CPU simulation done"
       DELAY=$((RANDOM % 190 + 10))
-      echo "Simulating work for ~${DELAY}s..."
-      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
-      echo
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done; echo
 
   - name: Show Summary of Issues 🏁
     run: |
