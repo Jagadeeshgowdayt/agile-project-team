@@ -1,0 +1,98 @@
+name: "Basic Frontend Best Practices & Performance Check"
+
+on:
+  push:
+    paths:
+      - '**/*.html'
+      - '**/*.css'
+      - '**/*.js'
+  workflow_dispatch:
+
+jobs:
+  best-practices-performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Check HTML Best Practices 🔍
+        run: |
+          echo "Checking HTML best practices..."
+          if ! grep -q '<html[^>]*lang=' index.html; then
+            echo "🔔 Missing lang attribute in <html>."
+          fi
+          if ! grep -q '<meta charset="UTF-8">' index.html; then
+            echo "🔔 Missing charset meta tag."
+          fi
+          if ! grep -q '<meta name="viewport"' index.html; then
+            echo "🔔 Missing viewport meta tag."
+          fi
+          if ! grep -q '<main>' index.html; then
+            echo "🔔 Missing <main> tag."
+          fi
+          if ! grep -q 'alt=' index.html; then
+            echo "🔔 Some images missing alt attribute."
+          fi
+          echo "✅ HTML best practices checks complete"
+
+      - name: Check CSS Best Practices 🎨
+        run: |
+          echo "Checking CSS best practices..."
+          if grep -q '!important' *.css; then
+            echo "🔔 Avoid using '!important'."
+          fi
+          if grep -q 'style=' *.html; then
+            echo "🔔 Inline CSS found in HTML."
+          fi
+          echo "✅ CSS best practices checks complete"
+
+      - name: Check JavaScript Best Practices 💡
+        run: |
+          echo "Checking JavaScript best practices..."
+          if grep -r 'var ' *.js; then
+            echo "🔔 Found 'var'. Consider 'let' or 'const'."
+          fi
+          if grep -r 'eval(' *.js; then
+            echo "❌ Found eval() — security risk."
+          fi
+          if grep -r 'innerHTML' *.js; then
+            echo "🔔 Found innerHTML usage. Ensure sanitization."
+          fi
+          echo "✅ JavaScript best practices checks complete"
+
+      - name: Performance Tests 🏎️
+        run: |
+          echo "Running basic performance tests..."
+          URL="http://localhost:8000/index.html"
+
+          # Total page load time
+          TOTAL_TIME=$(curl -s -w "%{time_total}" -o /dev/null $URL)
+          echo "Page Load Time: ${TOTAL_TIME}s"
+          if (( $(echo "$TOTAL_TIME > 1.0" | bc -l) )); then
+            echo "🔔 Page load time is above 1s."
+          fi
+
+          # Time to first byte (TTFB)
+          TTFB=$(curl -s -w "%{time_starttransfer}" -o /dev/null $URL)
+          echo "Time to First Byte (TTFB): ${TTFB}s"
+          if (( $(echo "$TTFB > 0.5" | bc -l) )); then
+            echo "🔔 TTFB is above 0.5s."
+          fi
+
+          # Resource size checks
+          for FILE in *.js *.css; do
+            SIZE_KB=$(du -k "$FILE" | cut -f1)
+            echo "$FILE size: ${SIZE_KB}KB"
+            if [ "$SIZE_KB" -gt 100 ]; then
+              echo "🔔 $FILE is larger than 100KB."
+            fi
+          done
+
+          echo "✅ Performance tests complete"
+
+      - name: Simulate Wait for Visibility 🔄
+        run: |
+          echo "Simulating delay to view output..."
+          sleep 30
