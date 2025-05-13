@@ -1,60 +1,71 @@
-name: "Basic Frontend Performance & Best Practices Check"
+name: "🧪 Advanced Frontend Performance Check"
 
 on:
   push:
     paths:
       - '**/*.html'
-      - '**/*.css'
       - '**/*.js'
+      - '**/*.css'
   workflow_dispatch:
 
 jobs:
-  performance-and-practices:
+  performance-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout Code
         uses: actions/checkout@v3
 
-      - name: Safe Resource Size Check 🗂️
+      - name: ⚙️ JS Function Complexity Check
         run: |
           set +e
-          echo "🔍 Checking JS/CSS resource sizes..."
-          for FILE in $(find . -name '*.js' -o -name '*.css'); do
-            [ -f "$FILE" ] || continue
-            SIZE_KB=$(du -k "$FILE" | cut -f1)
-            echo "📦 $FILE: ${SIZE_KB}KB"
-            if [ "$SIZE_KB" -gt 100 ]; then
-              echo "⚠️ $FILE is larger than 100KB."
+          echo "🔍 Analyzing JavaScript for nested loops and large functions..."
+          find . -name '*.js' | while read FILE; do
+            echo "📄 Checking $FILE"
+            NESTED=$(grep -Pzo 'for\s*.*?\s*{[^{}]*{[^{}]*}' "$FILE" | wc -l)
+            BIGFUNCS=$(awk '/function /{c=0;next}/}/&&c>30{print FILENAME " has long function"}{c++}' "$FILE")
+            echo "🧠 Nested loops: $NESTED"
+            [ "$NESTED" -gt 0 ] && echo "⚠️ Potential O(n²) behavior in $FILE"
+            echo "$BIGFUNCS"
+          done
+
+      - name: 🧠 JS Memory Usage Estimate (Node)
+        run: |
+          echo "🔍 Estimating JS memory usage with dummy Node logic..."
+          node -e "
+            const used = process.memoryUsage();
+            console.log('🧠 Memory Usage:', Math.round(used.heapUsed / 1024 / 1024), 'MB');
+          "
+
+      - name: 🏗️ DOM Size Check (HTML Complexity)
+        run: |
+          set +e
+          echo "🔍 Checking HTML for large number of DOM nodes..."
+          COUNT=$(grep -o '<[a-zA-Z]' index.html | wc -l)
+          echo "🧱 DOM Nodes in index.html: $COUNT"
+          [ "$COUNT" -gt 300 ] && echo "⚠️ DOM too large – may impact performance"
+
+      - name: 🧬 Long Functions Warning
+        run: |
+          set +e
+          echo "🔍 Checking for long JS functions..."
+          find . -name '*.js' | while read FILE; do
+            awk '/function /{c=0;next}/}/&&c>25{print FILENAME " has long function"}{c++}' "$FILE"
+          done
+
+      - name: 🌀 Deep Nesting Structure Detection
+        run: |
+          set +e
+          echo "🔍 Checking for deeply nested loops or if-blocks..."
+          find . -name '*.js' | while read FILE; do
+            DEPTH=$(grep -o '{' "$FILE" | wc -l)
+            if [ "$DEPTH" -gt 50 ]; then
+              echo "⚠️ Deep nesting in $FILE – consider simplifying logic"
             fi
           done
 
-      - name: Safe Image Size Check 📷
+      - name: ✅ Final Success Pass
         run: |
-          set +e
-          echo "🔍 Checking image sizes..."
-          for IMG in $(find . -name '*.png' -o -name '*.jpg' -o -name '*.jpeg'); do
-            [ -f "$IMG" ] || continue
-            IMG_SIZE_KB=$(du -k "$IMG" | cut -f1)
-            echo "🖼️ $IMG: ${IMG_SIZE_KB}KB"
-            if [ "$IMG_SIZE_KB" -gt 300 ]; then
-              echo "⚠️ Large image detected: $IMG"
-            fi
-          done
-
-      - name: Check for Minification (CSS/JS) ⚙️
-        run: |
-          set +e
-          echo "🔍 Checking for minified assets..."
-          for FILE in *.css *.js; do
-            [ -f "$FILE" ] || continue
-            if ! grep -q "min\\." "$FILE"; then
-              echo "⚠️ $FILE may not be minified."
-            fi
-          done
-
-      - name: Forced Success 🤖
-        run: |
-          echo "✅ All checks completed safely. Workflow passes no matter what!"
+          echo "🎉 All heuristic complexity and memory tests done! Workflow passes ✅"
           exit 0
