@@ -17,10 +17,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Simulate Long Runtime 🕒
+      - name: Simulate Extended Runtime 🕒
         run: |
           echo "Pretending to take a long time... 💤"
-          sleep 30
+          sleep 60  # Run time increased to at least 1 minute
 
       - name: Check for Secrets in JS 🔍
         run: |
@@ -30,7 +30,7 @@ jobs:
       - name: API Visibility Check 🌐
         run: |
           echo "Checking for hardcoded API URLs..."
-          # Search only in relevant source files and exclude comments with '#api'
+          # Skip matches in markdown, YAML, and comments like "#api key id"
           grep -IRn --exclude="*.md" --exclude="*.yml" --exclude-dir=".github" "https\\?://[^\"]*api" . | \
           grep -vE "^.*#.*api" || echo "✅ No exposed APIs detected"
 
@@ -66,5 +66,5 @@ jobs:
       - name: Directory Listing Test 🚪
         run: |
           echo "Checking for directory listing..."
-          sleep 2
+          sleep 5
           echo "✅ Directory listing disabled (simulated)"
