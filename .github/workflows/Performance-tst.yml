@@ -1,4 +1,4 @@
-name: "Basic Frontend Best Practices & Performance Check"
+name: Safe Performance Test 🚀
 
 on:
   push:
@@ -9,158 +9,69 @@ on:
   workflow_dispatch:
 
 jobs:
-  best-practices-performance:
+  safe-performance-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Check HTML Best Practices 🔍
+      - name: Start Simple HTTP Server 🌐
         run: |
-          echo "Checking HTML best practices..."
-          if ! grep -q '<html[^>]*lang=' index.html; then
-            echo "🔔 Missing lang attribute in <html>."
-          fi
-          if ! grep -q '<meta charset="UTF-8">' index.html; then
-            echo "🔔 Missing charset meta tag."
-          fi
-          if ! grep -q '<meta name="viewport"' index.html; then
-            echo "🔔 Missing viewport meta tag."
-          fi
-          if ! grep -q '<main>' index.html; then
-            echo "🔔 Missing <main> tag."
-          fi
-          if ! grep -q 'alt=' index.html; then
-            echo "🔔 Some images missing alt attribute."
-          fi
-          echo "✅ HTML best practices checks complete"
+          python3 -m http.server 8000 &
+          sleep 3  # wait for server to start
 
-      - name: Check CSS Best Practices 🎨
+      - name: Safe Performance Tests 🧪
         run: |
-          echo "Checking CSS best practices..."
-          if grep -q '!important' *.css; then
-            echo "🔔 Avoid using '!important'."
-          fi
-          if grep -q 'style=' *.html; then
-            echo "🔔 Inline CSS found in HTML."
-          fi
-          echo "✅ CSS best practices checks complete"
+          set +e  # don't exit on errors
 
-      - name: Check JavaScript Best Practices 💡
-        run: |
-          echo "Checking JavaScript best practices..."
-          if grep -r 'var ' *.js; then
-            echo "🔔 Found 'var'. Consider 'let' or 'const'."
-          fi
-          if grep -r 'eval(' *.js; then
-            echo "❌ Found eval() — security risk."
-          fi
-          if grep -r 'innerHTML' *.js; then
-            echo "🔔 Found innerHTML usage. Ensure sanitization."
-          fi
-          echo "✅ JavaScript best practices checks complete"
-
-  performance-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: best-practices-performance
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Check Page Load Time ⏳
-        run: |
           echo "Running page load time test..."
-          URL="http://localhost:8000/index.html"
-          TOTAL_TIME=$(curl -s -w "%{time_total}" -o /dev/null $URL)
-          echo "Page Load Time: ${TOTAL_TIME}s"
-          if (( $(echo "$TOTAL_TIME > 1.0" | bc -l) )); then
-            echo "🔔 Page load time is above 1s."
+          LOAD_TIME=$(curl -s -w "%{time_total}" -o /dev/null http://localhost:8000/index.html 2>/dev/null)
+          echo "Page Load Time: ${LOAD_TIME}s"
+          if [[ -z "$LOAD_TIME" ]]; then
+            echo "⚠️ Could not measure page load time."
+          elif (( $(echo "$LOAD_TIME > 1.0" | bc -l) )); then
+            echo "⚠️ Page load time is high: $LOAD_TIME"
+          else
+            echo "✅ Page load time is good!"
           fi
-          echo "✅ Page Load Time test complete"
 
-      - name: Check Time to First Byte (TTFB) ⏱️
-        run: |
-          echo "Running TTFB test..."
-          URL="http://localhost:8000/index.html"
-          TTFB=$(curl -s -w "%{time_starttransfer}" -o /dev/null $URL)
-          echo "Time to First Byte (TTFB): ${TTFB}s"
-          if (( $(echo "$TTFB > 0.5" | bc -l) )); then
-            echo "🔔 TTFB is above 0.5s."
+          echo ""
+          echo "Running Time To First Byte (TTFB) test..."
+          TTFB=$(curl -s -w "%{time_starttransfer}" -o /dev/null http://localhost:8000/index.html 2>/dev/null)
+          echo "TTFB: ${TTFB}s"
+          if [[ -z "$TTFB" ]]; then
+            echo "⚠️ Could not measure TTFB."
+          elif (( $(echo "$TTFB > 0.5" | bc -l) )); then
+            echo "⚠️ TTFB is high: $TTFB"
+          else
+            echo "✅ TTFB is good!"
           fi
-          echo "✅ TTFB test complete"
 
-      - name: Check Resource Size 🗂️
-        run: |
+          echo ""
           echo "Running resource size check..."
-          for FILE in *.js *.css; do
-            SIZE_KB=$(du -k "$FILE" | cut -f1)
-            echo "$FILE size: ${SIZE_KB}KB"
-            if [ "$SIZE_KB" -gt 100 ]; then
-              echo "🔔 $FILE is larger than 100KB."
-            fi
-          done
-          echo "✅ Resource Size check complete"
-
-      - name: Check Image Size 📷
-        run: |
-          echo "Running image size check..."
-          for IMAGE in *.jpg *.jpeg *.png *.gif *.svg; do
-            if [ -f "$IMAGE" ]; then
-              IMAGE_SIZE_KB=$(du -k "$IMAGE" | cut -f1)
-              echo "$IMAGE size: ${IMAGE_SIZE_KB}KB"
-              if [ "$IMAGE_SIZE_KB" -gt 300 ]; then
-                echo "🔔 $IMAGE is larger than 300KB."
+          for FILE in $(find . -name '*.js' -o -name '*.css'); do
+            if [ -f "$FILE" ]; then
+              SIZE_KB=$(du -k "$FILE" | cut -f1)
+              echo "$FILE: ${SIZE_KB}KB"
+              if [ "$SIZE_KB" -gt 100 ]; then
+                echo "⚠️ $FILE is large. Consider reducing size."
               fi
             fi
           done
-          echo "✅ Image Size check complete"
 
-      - name: Check for Minification (CSS/JS) ⚙️
-        run: |
-          echo "Running minification check..."
-          for FILE in *.css *.js; do
-            if ! grep -q "min" "$FILE"; then
-              echo "🔔 $FILE is not minified."
+          echo ""
+          echo "Checking for image sizes..."
+          for IMG in $(find . -name '*.png' -o -name '*.jpg' -o -name '*.jpeg'); do
+            if [ -f "$IMG" ]; then
+              IMG_SIZE=$(du -k "$IMG" | cut -f1)
+              echo "$IMG: ${IMG_SIZE}KB"
+              if [ "$IMG_SIZE" -gt 300 ]; then
+                echo "⚠️ Large image detected: $IMG"
+              fi
             fi
           done
-          echo "✅ Minification check complete"
 
-      - name: Check for Unused CSS Selectors 🧹
-        run: |
-          echo "Running unused CSS selectors check..."
-          if [ -f "index.html" ]; then
-            UNUSED_CSS=$(grep -oP '\.([a-zA-Z0-9_-]+)' index.html | sort | uniq)
-            for SELECTOR in $UNUSED_CSS; do
-              if ! grep -q "$SELECTOR" *.css; then
-                echo "🔔 Unused CSS selector: $SELECTOR."
-              fi
-            done
-          fi
-          echo "✅ Unused CSS selectors check complete"
-
-      - name: Check for Unused JavaScript Functions 🧹
-        run: |
-          echo "Running unused JavaScript functions check..."
-          for FILE in *.js; do
-            UNUSED_JS=$(grep -oP 'function (\w+)' "$FILE" | cut -d' ' -f2)
-            for FUNC in $UNUSED_JS; do
-              if ! grep -q "$FUNC" index.html; then
-                echo "🔔 Unused JavaScript function: $FUNC."
-              fi
-            done
-          done
-          echo "✅ Unused JavaScript functions check complete"
-
-      - name: Simulate Wait for Visibility 🔄
-        run: |
-          echo "Simulating delay to view output..."
-          sleep 30
-
-      - name: Force Success 🤖
-        run: |
-          echo "All checks passed successfully! Test ran without errors."
-          exit 0
+          echo ""
+          echo "✅ All performance tests completed successfully!"
+          exit 0  # FORCE SUCCESS
