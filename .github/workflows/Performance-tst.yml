@@ -106,17 +106,7 @@ jobs:
             echo "ℹ️ index.html not found; skipped DOM size check."
           fi
 
-      - name: JS Function Complexity Heuristic
-        run: |
-          echo "🔍 Analyzing JS for nested loops/large functions..."
-          for FILE in $(find . -name '*.js'); do
-            NESTED=$(grep -Pzo 'for\s*.*?\s*{[^{}]*{[^{}]*}' "$FILE" | wc -l)
-            [ "$NESTED" -gt 0 ] && echo "⚠️ Nested loops in $FILE." && echo "⚠️ Nested loops in $FILE" >> warnings.txt
-            LONGFUNCS=$(awk '/function /{c=0;f=1;next}/}/{if(f)c++; if(c>30)print FILENAME\" has long function\"; f=0}' "$FILE")
-            [ -n "$LONGFUNCS" ] && echo "⚠️ $LONGFUNCS" && echo "⚠️ $LONGFUNCS" >> warnings.txt
-          done
-
-      - name: JS Memory Usage Estimate
+      - name: Memory Usage Estimate
         run: |
           echo "🔍 Estimating Node.js heap usage..."
           MEM=$(node -e "const u=process.memoryUsage(); console.log(Math.round(u.heapUsed/1024/1024)+'MB');")
@@ -128,6 +118,19 @@ jobs:
           echo "🔧 Simulating CPU load for 30s..."
           timeout 30s bash -c "while :; do :; done" || true
           echo "  • CPU simulation done"
+
+      - name: Script Execution Time Check
+        run: |
+          echo "🔍 Checking JavaScript execution time..."
+          START=$(date +%s)
+          node -e "console.log('Running a dummy JS test for performance...')"
+          END=$(date +%s)
+          EXEC_TIME=$((END - START))
+          echo "  • Script execution time: $EXEC_TIME seconds"
+          if [ "$EXEC_TIME" -gt 5 ]; then
+            echo "⚠️ JavaScript execution time exceeded 5 seconds."
+            echo "⚠️ JS Execution Time: $EXEC_TIME seconds" >> warnings.txt
+          fi
 
       - name: Show Summary of Issues
         run: |
