@@ -34,6 +34,7 @@ jobs:
               echo "⚠️ $FILE >100KB" >> warnings.txt
             fi
           done
+          sleep $((RANDOM % 100 + 10))  # Simulate delay between 10 and 100 seconds
 
       - name: Image Size Check
         run: |
@@ -47,6 +48,7 @@ jobs:
               echo "⚠️ $IMG >300KB" >> warnings.txt
             fi
           done
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: HTML File Size Check
         run: |
@@ -60,6 +62,7 @@ jobs:
               echo "⚠️ $HTML >200KB" >> warnings.txt
             fi
           done
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: Inline JS/CSS Check
         run: |
@@ -68,6 +71,7 @@ jobs:
           INLINE_CSS=$(grep -R "style=" . || true)
           [ -n "$INLINE_JS" ] && echo "⚠️ Inline <script> found." && echo "⚠️ Inline <script>" >> warnings.txt
           [ -n "$INLINE_CSS" ] && echo "⚠️ Inline style attribute found." && echo "⚠️ Inline style" >> warnings.txt
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: Minification Check
         run: |
@@ -79,18 +83,21 @@ jobs:
               echo "⚠️ Unminified $FILE" >> warnings.txt
             fi
           done
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: Script Tag defer/async Check
         run: |
           echo "🔍 Checking <script> tags for defer/async..."
           MISSING=$(grep -R "<script" . | grep -vE "defer|async" || true)
           [ -n "$MISSING" ] && echo "⚠️ Some <script> tags missing defer/async." && echo "⚠️ Missing defer/async" >> warnings.txt
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: console.log Check
         run: |
           echo "🔍 Checking for console.log calls..."
           LOGS=$(grep -R "console.log" . || true)
           [ -n "$LOGS" ] && echo "⚠️ console.log found in code." && echo "⚠️ console.log left" >> warnings.txt
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: DOM Size Check
         run: |
@@ -105,19 +112,21 @@ jobs:
           else
             echo "ℹ️ index.html not found; skipped DOM size check."
           fi
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: Memory Usage Estimate
         run: |
           echo "🔍 Estimating Node.js heap usage..."
           MEM=$(node -e "const u=process.memoryUsage(); console.log(Math.round(u.heapUsed/1024/1024)+'MB');")
           echo "  • Heap used: $MEM"
-          # No threshold here—just informative
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: Simulate CPU Load
         run: |
           echo "🔧 Simulating CPU load for 30s..."
           timeout 30s bash -c "while :; do :; done" || true
           echo "  • CPU simulation done"
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: Script Execution Time Check
         run: |
@@ -131,6 +140,7 @@ jobs:
             echo "⚠️ JavaScript execution time exceeded 5 seconds."
             echo "⚠️ JS Execution Time: $EXEC_TIME seconds" >> warnings.txt
           fi
+          sleep $((RANDOM % 100 + 10))  # Simulate delay
 
       - name: Show Summary of Issues
         run: |
