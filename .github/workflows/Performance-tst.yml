@@ -18,9 +18,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Initialize warnings collector
-        run: |
-          set +e
-          echo "" > warnings.txt
+        run: echo "" > warnings.txt
 
       - name: JS/CSS File Size Check 📦
         run: |
@@ -28,14 +26,11 @@ jobs:
           for FILE in $(find . -maxdepth 1 -name '*.js' -o -name '*.css'); do
             [ -f "$FILE" ] || continue
             SIZE_KB=$(du -k "$FILE" | cut -f1)
-            echo "  • $FILE: ${SIZE_KB}KB"
             if [ "$SIZE_KB" -gt 100 ]; then
               echo "⚠️ $FILE is larger than 100KB." >> warnings.txt
             fi
           done
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          sleep $((RANDOM % 41 + 10))
 
       - name: Image Size Check 🖼️
         run: |
@@ -43,14 +38,11 @@ jobs:
           for IMG in $(find . -maxdepth 1 -name '*.png' -o -name '*.jpg' -o -name '*.jpeg'); do
             [ -f "$IMG" ] || continue
             IMG_SIZE_KB=$(du -k "$IMG" | cut -f1)
-            echo "  • $IMG: ${IMG_SIZE_KB}KB"
             if [ "$IMG_SIZE_KB" -gt 300 ]; then
               echo "⚠️ $IMG is larger than 300KB." >> warnings.txt
             fi
           done
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          sleep $((RANDOM % 41 + 10))
 
       - name: HTML File Size Check 📄
         run: |
@@ -58,24 +50,18 @@ jobs:
           for HTML in $(find . -maxdepth 1 -name '*.html'); do
             [ -f "$HTML" ] || continue
             HTML_SIZE_KB=$(du -k "$HTML" | cut -f1)
-            echo "  • $HTML: ${HTML_SIZE_KB}KB"
             if [ "$HTML_SIZE_KB" -gt 200 ]; then
               echo "⚠️ $HTML is larger than 200KB." >> warnings.txt
             fi
           done
-          echo "Sleeping for 100s..."
-          sleep 100
+          sleep 50
 
       - name: Inline JS/CSS Check 📝
         run: |
           echo "🔍 Checking for inline <script> or styles..."
-          INLINE_JS=$(grep -R "<script>[^<]" . || true)
-          INLINE_CSS=$(grep -R "style=" . || true)
-          [ -n "$INLINE_JS" ] && echo "⚠️ Inline <script> found." >> warnings.txt
-          [ -n "$INLINE_CSS" ] && echo "⚠️ Inline style attribute found." >> warnings.txt
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          grep -R "<script>[^<]" . && echo "⚠️ Inline <script> found." >> warnings.txt || true
+          grep -R "style=" . && echo "⚠️ Inline style attribute found." >> warnings.txt || true
+          sleep $((RANDOM % 41 + 10))
 
       - name: Minification Check ⚙️
         run: |
@@ -86,70 +72,54 @@ jobs:
               echo "⚠️ $FILE may not be minified." >> warnings.txt
             fi
           done
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          sleep $((RANDOM % 41 + 10))
 
       - name: Script Tag defer/async Check ⚡
         run: |
           echo "🔍 Checking <script> tags for defer/async..."
-          MISSING=$(grep -R "<script" . | grep -vE "defer|async" || true)
-          [ -n "$MISSING" ] && echo "⚠️ Some <script> tags missing defer/async." >> warnings.txt
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          grep -R "<script" . | grep -vE "defer|async" && echo "⚠️ Some <script> tags missing defer/async." >> warnings.txt || true
+          sleep $((RANDOM % 41 + 10))
 
       - name: console.log Check 🐞
         run: |
           echo "🔍 Checking for console.log calls..."
-          LOGS=$(grep -R "console.log" . || true)
-          [ -n "$LOGS" ] && echo "⚠️ console.log found in code." >> warnings.txt
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          grep -R "console.log" . && echo "⚠️ console.log found in code." >> warnings.txt || true
+          sleep $((RANDOM % 41 + 10))
 
       - name: DOM Size Check 🌳
         run: |
           echo "🔍 Checking DOM node count (index.html)..."
           if [ -f "index.html" ]; then
             COUNT=$(grep -o "<[a-zA-Z]" index.html | wc -l)
-            echo "  • index.html has $COUNT tags"
-            [ "$COUNT" -gt 300 ] && echo "⚠️ Too many DOM nodes (>300)." >> warnings.txt
+            if [ "$COUNT" -gt 300 ]; then
+              echo "⚠️ Too many DOM nodes (>300)." >> warnings.txt
+            fi
           else
             echo "ℹ️ index.html not found; skipped DOM size check."
           fi
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          sleep $((RANDOM % 41 + 10))
 
       - name: Memory Usage Estimate 🧠
         run: |
           echo "🔍 Estimating Node.js heap usage..."
           MEM=$(node -e "const u=process.memoryUsage(); console.log(Math.round(u.heapUsed/1024/1024)+'MB');")
-          echo "  • Heap used: $MEM"
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          echo "Heap used: $MEM"
+          sleep $((RANDOM % 41 + 10))
 
       - name: Simulate CPU Load 🔄
         run: |
           echo "🔧 Simulating CPU load for 30s..."
           timeout 30s bash -c "while :; do :; done" || true
-          echo "  • CPU simulation done"
-          DELAY=$((RANDOM % 91 + 10))
-          echo "Sleeping for ${DELAY}s..."
-          sleep ${DELAY}
+          sleep $((RANDOM % 41 + 10))
 
       - name: Show Summary of Issues 🏁
         run: |
           echo "🏁 Summary of Issues:"
-          if [ -f warnings.txt ]; then
+          if [ -s warnings.txt ]; then
             cat warnings.txt
           else
             echo "✅ No issues detected!"
           fi
 
       - name: Force Workflow Success ✅
-        run: |
-          echo "✅ Completed all checks. This workflow always passes."
-          exit 0
+        run: echo "✅ Completed all checks. Workflow passed."
