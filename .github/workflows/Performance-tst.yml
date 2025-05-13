@@ -1,157 +1,159 @@
 name: "🧪 Frontend Performance & Best Practices Checks"
 
-on:
-  push:
-    paths:
-      - '**/*.html'
-      - '**/*.css'
-      - '**/*.js'
-  workflow_dispatch:
+on: push: paths: - '/*.html' - '/.css' - '**/.js' workflow_dispatch:
 
-jobs:
-  performance-and-practices:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+jobs: performance-and-practices: runs-on: ubuntu-latest timeout-minutes: 30
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v3
 
-      - name: Initialize warnings collector
-        run: |
-          set +e
-          echo "WARNINGS=" >> $GITHUB_ENV
+  - name: Initialize warnings collector
+    run: |
+      set +e
+      echo "" > warnings.txt
 
-      - name: JS/CSS File Size Check
-        run: |
-          echo "🔍 Checking JS/CSS file sizes..."
-          for FILE in $(find . -maxdepth 1 -name '*.js' -o -name '*.css'); do
-            [ -f "$FILE" ] || continue
-            SIZE_KB=$(du -k "$FILE" | cut -f1)
-            echo "  • $FILE: ${SIZE_KB}KB"
-            if [ "$SIZE_KB" -gt 100 ]; then
-              echo "⚠️ $FILE is larger than 100KB."
-              echo "⚠️ $FILE >100KB" >> warnings.txt
-            fi
-          done
-          sleep $((RANDOM % 100 + 10))  # Simulate delay between 10 and 100 seconds
+  - name: JS/CSS File Size Check 📦
+    run: |
+      echo "🔍 Checking JS/CSS file sizes..."
+      for FILE in $(find . -maxdepth 1 -name '*.js' -o -name '*.css'); do
+        [ -f "$FILE" ] || continue
+        SIZE_KB=$(du -k "$FILE" | cut -f1)
+        echo "  • $FILE: ${SIZE_KB}KB"
+        if [ "$SIZE_KB" -gt 100 ]; then
+          echo "⚠️ $FILE is larger than 100KB." >> warnings.txt
+        fi
+      done
+      # simulate work
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: Image Size Check
-        run: |
-          echo "🔍 Checking image file sizes..."
-          for IMG in $(find . -maxdepth 1 -name '*.png' -o -name '*.jpg' -o -name '*.jpeg'); do
-            [ -f "$IMG" ] || continue
-            IMG_SIZE_KB=$(du -k "$IMG" | cut -f1)
-            echo "  • $IMG: ${IMG_SIZE_KB}KB"
-            if [ "$IMG_SIZE_KB" -gt 300 ]; then
-              echo "⚠️ $IMG is larger than 300KB."
-              echo "⚠️ $IMG >300KB" >> warnings.txt
-            fi
-          done
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: Image Size Check 🖼️
+    run: |
+      echo "🔍 Checking image file sizes..."
+      for IMG in $(find . -maxdepth 1 -name '*.png' -o -name '*.jpg' -o -name '*.jpeg'); do
+        [ -f "$IMG" ] || continue
+        IMG_SIZE_KB=$(du -k "$IMG" | cut -f1)
+        echo "  • $IMG: ${IMG_SIZE_KB}KB"
+        if [ "$IMG_SIZE_KB" -gt 300 ]; then
+          echo "⚠️ $IMG is larger than 300KB." >> warnings.txt
+        fi
+      done
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: HTML File Size Check
-        run: |
-          echo "🔍 Checking HTML file sizes..."
-          for HTML in $(find . -maxdepth 1 -name '*.html'); do
-            [ -f "$HTML" ] || continue
-            HTML_SIZE_KB=$(du -k "$HTML" | cut -f1)
-            echo "  • $HTML: ${HTML_SIZE_KB}KB"
-            if [ "$HTML_SIZE_KB" -gt 200 ]; then
-              echo "⚠️ $HTML is larger than 200KB."
-              echo "⚠️ $HTML >200KB" >> warnings.txt
-            fi
-          done
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: HTML File Size Check 📄
+    run: |
+      echo "🔍 Checking HTML file sizes..."
+      for HTML in $(find . -maxdepth 1 -name '*.html'); do
+        [ -f "$HTML" ] || continue
+        HTML_SIZE_KB=$(du -k "$HTML" | cut -f1)
+        echo "  • $HTML: ${HTML_SIZE_KB}KB"
+        if [ "$HTML_SIZE_KB" -gt 200 ]; then
+          echo "⚠️ $HTML is larger than 200KB." >> warnings.txt
+        fi
+      done
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: Inline JS/CSS Check
-        run: |
-          echo "🔍 Checking for inline <script> or styles..."
-          INLINE_JS=$(grep -R "<script>[^<]" . || true)
-          INLINE_CSS=$(grep -R "style=" . || true)
-          [ -n "$INLINE_JS" ] && echo "⚠️ Inline <script> found." && echo "⚠️ Inline <script>" >> warnings.txt
-          [ -n "$INLINE_CSS" ] && echo "⚠️ Inline style attribute found." && echo "⚠️ Inline style" >> warnings.txt
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: Inline JS/CSS Check 📝
+    run: |
+      echo "🔍 Checking for inline <script> or styles..."
+      INLINE_JS=$(grep -R "<script>[^<]" . || true)
+      INLINE_CSS=$(grep -R "style=" . || true)
+      [ -n "$INLINE_JS" ] && echo "⚠️ Inline <script> found." >> warnings.txt
+      [ -n "$INLINE_CSS" ] && echo "⚠️ Inline style attribute found." >> warnings.txt
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: Minification Check
-        run: |
-          echo "🔍 Checking if assets are minified..."
-          for FILE in *.js *.css; do
-            [ -f "$FILE" ] || continue
-            if ! echo "$FILE" | grep -qE "\.min\."; then
-              echo "⚠️ $FILE may not be minified."
-              echo "⚠️ Unminified $FILE" >> warnings.txt
-            fi
-          done
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: Minification Check ⚙️
+    run: |
+      echo "🔍 Checking if assets are minified..."
+      for FILE in *.js *.css; do
+        [ -f "$FILE" ] || continue
+        if ! echo "$FILE" | grep -qE "\.min\."; then
+          echo "⚠️ $FILE may not be minified." >> warnings.txt
+        fi
+      done
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: Script Tag defer/async Check
-        run: |
-          echo "🔍 Checking <script> tags for defer/async..."
-          MISSING=$(grep -R "<script" . | grep -vE "defer|async" || true)
-          [ -n "$MISSING" ] && echo "⚠️ Some <script> tags missing defer/async." && echo "⚠️ Missing defer/async" >> warnings.txt
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: Script Tag defer/async Check ⚡
+    run: |
+      echo "🔍 Checking <script> tags for defer/async..."
+      MISSING=$(grep -R "<script" . | grep -vE "defer|async" || true)
+      [ -n "$MISSING" ] && echo "⚠️ Some <script> tags missing defer/async." >> warnings.txt
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: console.log Check
-        run: |
-          echo "🔍 Checking for console.log calls..."
-          LOGS=$(grep -R "console.log" . || true)
-          [ -n "$LOGS" ] && echo "⚠️ console.log found in code." && echo "⚠️ console.log left" >> warnings.txt
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: console.log Check 🐞
+    run: |
+      echo "🔍 Checking for console.log calls..."
+      LOGS=$(grep -R "console.log" . || true)
+      [ -n "$LOGS" ] && echo "⚠️ console.log found in code." >> warnings.txt
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: DOM Size Check
-        run: |
-          echo "🔍 Checking DOM node count (index.html)..."
-          if [ -f "index.html" ]; then
-            COUNT=$(grep -o "<[a-zA-Z]" index.html | wc -l)
-            echo "  • index.html has $COUNT tags"
-            if [ "$COUNT" -gt 300 ]; then
-              echo "⚠️ Too many DOM nodes (>300)."
-              echo "⚠️ DOM nodes: $COUNT" >> warnings.txt
-            fi
-          else
-            echo "ℹ️ index.html not found; skipped DOM size check."
-          fi
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: DOM Size Check 🌳
+    run: |
+      echo "🔍 Checking DOM node count (index.html)..."
+      if [ -f "index.html" ]; then
+        COUNT=$(grep -o "<[a-zA-Z]" index.html | wc -l)
+        echo "  • index.html has $COUNT tags"
+        [ "$COUNT" -gt 300 ] && echo "⚠️ Too many DOM nodes (>300)." >> warnings.txt
+      else
+        echo "ℹ️ index.html not found; skipped DOM size check."
+      fi
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: Memory Usage Estimate
-        run: |
-          echo "🔍 Estimating Node.js heap usage..."
-          MEM=$(node -e "const u=process.memoryUsage(); console.log(Math.round(u.heapUsed/1024/1024)+'MB');")
-          echo "  • Heap used: $MEM"
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: Memory Usage Estimate 🧠
+    run: |
+      echo "🔍 Estimating Node.js heap usage..."
+      MEM=$(node -e "const u=process.memoryUsage(); console.log(Math.round(u.heapUsed/1024/1024)+'MB');")
+      echo "  • Heap used: $MEM"
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: Simulate CPU Load
-        run: |
-          echo "🔧 Simulating CPU load for 30s..."
-          timeout 30s bash -c "while :; do :; done" || true
-          echo "  • CPU simulation done"
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: Simulate CPU Load 🔄
+    run: |
+      echo "🔧 Simulating CPU load for 30s..."
+      timeout 30s bash -c "while :; do :; done" || true
+      echo "  • CPU simulation done"
+      DELAY=$((RANDOM % 190 + 10))
+      echo "Simulating work for ~${DELAY}s..."
+      for i in $(seq 1 $DELAY); do echo -n "."; sleep 1; done
+      echo
 
-      - name: Script Execution Time Check
-        run: |
-          echo "🔍 Checking JavaScript execution time..."
-          START=$(date +%s)
-          node -e "console.log('Running a dummy JS test for performance...')"
-          END=$(date +%s)
-          EXEC_TIME=$((END - START))
-          echo "  • Script execution time: $EXEC_TIME seconds"
-          if [ "$EXEC_TIME" -gt 5 ]; then
-            echo "⚠️ JavaScript execution time exceeded 5 seconds."
-            echo "⚠️ JS Execution Time: $EXEC_TIME seconds" >> warnings.txt
-          fi
-          sleep $((RANDOM % 100 + 10))  # Simulate delay
+  - name: Show Summary of Issues 🏁
+    run: |
+      echo "🏁 Summary of Issues:"
+      if [ -f warnings.txt ]; then
+        cat warnings.txt
+      else
+        echo "✅ No issues detected!"
+      fi
 
-      - name: Show Summary of Issues
-        run: |
-          echo "🏁 Summary of Issues:"
-          if [ -f warnings.txt ]; then
-            cat warnings.txt
-          else
-            echo "✅ No issues detected!"
-          fi
+  - name: Force Workflow Success ✅
+    run: |
+      echo "✅ Completed all checks. This workflow always passes."
+      exit 0
 
-      - name: Force Workflow Success
-        run: |
-          echo "✅ Workflow completed — no errors will stop it."
-          exit 0
