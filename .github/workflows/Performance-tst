@@ -1,0 +1,68 @@
+name: "Basic Frontend Best Practices Check"
+
+on:
+  push:
+    paths:
+      - '**/*.html'
+      - '**/*.css'
+      - '**/*.js'
+  workflow_dispatch:
+
+jobs:
+  best-practices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Check HTML Best Practices 🔍
+        run: |
+          echo "Checking HTML best practices..."
+          if ! grep -q '<html[^>]*lang=' index.html; then
+            echo "🔔 Missing lang attribute in <html>, it's recommended for accessibility and SEO."
+          fi
+          if ! grep -q '<meta charset="UTF-8">' index.html; then
+            echo "🔔 Missing charset meta tag. It’s recommended to use <meta charset='UTF-8'>."
+          fi
+          if ! grep -q '<meta name="viewport"' index.html; then
+            echo "🔔 Missing viewport meta tag. It's crucial for mobile responsiveness."
+          fi
+          if ! grep -q '<main>' index.html; then
+            echo "🔔 Missing <main> tag. It helps with semantic HTML structure."
+          fi
+          if ! grep -q 'alt=' index.html; then
+            echo "🔔 Some images are missing the 'alt' attribute for accessibility."
+          fi
+          echo "✅ HTML checks complete"
+
+      - name: Check CSS Best Practices 🎨
+        run: |
+          echo "Checking CSS best practices..."
+          if grep -q '!important' *.css; then
+            echo "🔔 Avoid using '!important' unless absolutely necessary."
+          fi
+          if grep -q 'style=' index.html; then
+            echo "🔔 Inline CSS found. It’s recommended to use external stylesheets for better maintainability."
+          fi
+          echo "✅ CSS checks complete"
+
+      - name: Check JavaScript Best Practices 💡
+        run: |
+          echo "Checking JavaScript best practices..."
+          if grep -r 'var ' *.js; then
+            echo "🔔 Found 'var' usage. Use 'let' or 'const' for block-scoped variables."
+          fi
+          if grep -r 'eval(' *.js; then
+            echo "❌ Found eval() — This is a security risk. Avoid using it."
+          fi
+          if grep -r 'innerHTML' *.js; then
+            echo "🔔 Found innerHTML usage. Be cautious and sanitize input if using it."
+          fi
+          echo "✅ JavaScript checks complete"
+
+      - name: Simulate Wait for Visibility 🔄
+        run: |
+          echo "Simulating delay to view output..."
+          sleep 30
