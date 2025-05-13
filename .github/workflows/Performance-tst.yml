@@ -1,71 +1,144 @@
-name: "🧪 Advanced Frontend Performance Check"
+name: "🧪 Frontend Performance & Best Practices Checks"
 
 on:
   push:
     paths:
       - '**/*.html'
-      - '**/*.js'
       - '**/*.css'
+      - '**/*.js'
   workflow_dispatch:
 
 jobs:
-  performance-checks:
+  performance-and-practices:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
-      - name: 📥 Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: ⚙️ JS Function Complexity Check
+      - name: Initialize warnings collector
         run: |
           set +e
-          echo "🔍 Analyzing JavaScript for nested loops and large functions..."
-          find . -name '*.js' | while read FILE; do
-            echo "📄 Checking $FILE"
-            NESTED=$(grep -Pzo 'for\s*.*?\s*{[^{}]*{[^{}]*}' "$FILE" | wc -l)
-            BIGFUNCS=$(awk '/function /{c=0;next}/}/&&c>30{print FILENAME " has long function"}{c++}' "$FILE")
-            echo "🧠 Nested loops: $NESTED"
-            [ "$NESTED" -gt 0 ] && echo "⚠️ Potential O(n²) behavior in $FILE"
-            echo "$BIGFUNCS"
-          done
+          echo "WARNINGS=" >> $GITHUB_ENV
 
-      - name: 🧠 JS Memory Usage Estimate (Node)
+      - name: JS/CSS File Size Check
         run: |
-          echo "🔍 Estimating JS memory usage with dummy Node logic..."
-          node -e "
-            const used = process.memoryUsage();
-            console.log('🧠 Memory Usage:', Math.round(used.heapUsed / 1024 / 1024), 'MB');
-          "
-
-      - name: 🏗️ DOM Size Check (HTML Complexity)
-        run: |
-          set +e
-          echo "🔍 Checking HTML for large number of DOM nodes..."
-          COUNT=$(grep -o '<[a-zA-Z]' index.html | wc -l)
-          echo "🧱 DOM Nodes in index.html: $COUNT"
-          [ "$COUNT" -gt 300 ] && echo "⚠️ DOM too large – may impact performance"
-
-      - name: 🧬 Long Functions Warning
-        run: |
-          set +e
-          echo "🔍 Checking for long JS functions..."
-          find . -name '*.js' | while read FILE; do
-            awk '/function /{c=0;next}/}/&&c>25{print FILENAME " has long function"}{c++}' "$FILE"
-          done
-
-      - name: 🌀 Deep Nesting Structure Detection
-        run: |
-          set +e
-          echo "🔍 Checking for deeply nested loops or if-blocks..."
-          find . -name '*.js' | while read FILE; do
-            DEPTH=$(grep -o '{' "$FILE" | wc -l)
-            if [ "$DEPTH" -gt 50 ]; then
-              echo "⚠️ Deep nesting in $FILE – consider simplifying logic"
+          echo "🔍 Checking JS/CSS file sizes..."
+          for FILE in $(find . -maxdepth 1 -name '*.js' -o -name '*.css'); do
+            [ -f "$FILE" ] || continue
+            SIZE_KB=$(du -k "$FILE" | cut -f1)
+            echo "  • $FILE: ${SIZE_KB}KB"
+            if [ "$SIZE_KB" -gt 100 ]; then
+              echo "⚠️ $FILE is larger than 100KB."
+              echo "⚠️ $FILE >100KB" >> warnings.txt
             fi
           done
 
-      - name: ✅ Final Success Pass
+      - name: Image Size Check
         run: |
-          echo "🎉 All heuristic complexity and memory tests done! Workflow passes ✅"
+          echo "🔍 Checking image file sizes..."
+          for IMG in $(find . -maxdepth 1 -name '*.png' -o -name '*.jpg' -o -name '*.jpeg'); do
+            [ -f "$IMG" ] || continue
+            IMG_SIZE_KB=$(du -k "$IMG" | cut -f1)
+            echo "  • $IMG: ${IMG_SIZE_KB}KB"
+            if [ "$IMG_SIZE_KB" -gt 300 ]; then
+              echo "⚠️ $IMG is larger than 300KB."
+              echo "⚠️ $IMG >300KB" >> warnings.txt
+            fi
+          done
+
+      - name: HTML File Size Check
+        run: |
+          echo "🔍 Checking HTML file sizes..."
+          for HTML in $(find . -maxdepth 1 -name '*.html'); do
+            [ -f "$HTML" ] || continue
+            HTML_SIZE_KB=$(du -k "$HTML" | cut -f1)
+            echo "  • $HTML: ${HTML_SIZE_KB}KB"
+            if [ "$HTML_SIZE_KB" -gt 200 ]; then
+              echo "⚠️ $HTML is larger than 200KB."
+              echo "⚠️ $HTML >200KB" >> warnings.txt
+            fi
+          done
+
+      - name: Inline JS/CSS Check
+        run: |
+          echo "🔍 Checking for inline <script> or styles..."
+          INLINE_JS=$(grep -R "<script>[^<]" . || true)
+          INLINE_CSS=$(grep -R "style=" . || true)
+          [ -n "$INLINE_JS" ] && echo "⚠️ Inline <script> found." && echo "⚠️ Inline <script>" >> warnings.txt
+          [ -n "$INLINE_CSS" ] && echo "⚠️ Inline style attribute found." && echo "⚠️ Inline style" >> warnings.txt
+
+      - name: Minification Check
+        run: |
+          echo "🔍 Checking if assets are minified..."
+          for FILE in *.js *.css; do
+            [ -f "$FILE" ] || continue
+            if ! echo "$FILE" | grep -qE "\.min\."; then
+              echo "⚠️ $FILE may not be minified."
+              echo "⚠️ Unminified $FILE" >> warnings.txt
+            fi
+          done
+
+      - name: Script Tag defer/async Check
+        run: |
+          echo "🔍 Checking <script> tags for defer/async..."
+          MISSING=$(grep -R "<script" . | grep -vE "defer|async" || true)
+          [ -n "$MISSING" ] && echo "⚠️ Some <script> tags missing defer/async." && echo "⚠️ Missing defer/async" >> warnings.txt
+
+      - name: console.log Check
+        run: |
+          echo "🔍 Checking for console.log calls..."
+          LOGS=$(grep -R "console.log" . || true)
+          [ -n "$LOGS" ] && echo "⚠️ console.log found in code." && echo "⚠️ console.log left" >> warnings.txt
+
+      - name: DOM Size Check
+        run: |
+          echo "🔍 Checking DOM node count (index.html)..."
+          if [ -f "index.html" ]; then
+            COUNT=$(grep -o "<[a-zA-Z]" index.html | wc -l)
+            echo "  • index.html has $COUNT tags"
+            if [ "$COUNT" -gt 300 ]; then
+              echo "⚠️ Too many DOM nodes (>300)."
+              echo "⚠️ DOM nodes: $COUNT" >> warnings.txt
+            fi
+          else
+            echo "ℹ️ index.html not found; skipped DOM size check."
+          fi
+
+      - name: JS Function Complexity Heuristic
+        run: |
+          echo "🔍 Analyzing JS for nested loops/large functions..."
+          for FILE in $(find . -name '*.js'); do
+            NESTED=$(grep -Pzo 'for\s*.*?\s*{[^{}]*{[^{}]*}' "$FILE" | wc -l)
+            [ "$NESTED" -gt 0 ] && echo "⚠️ Nested loops in $FILE." && echo "⚠️ Nested loops in $FILE" >> warnings.txt
+            LONGFUNCS=$(awk '/function /{c=0;f=1;next}/}/{if(f)c++; if(c>30)print FILENAME\" has long function\"; f=0}' "$FILE")
+            [ -n "$LONGFUNCS" ] && echo "⚠️ $LONGFUNCS" && echo "⚠️ $LONGFUNCS" >> warnings.txt
+          done
+
+      - name: JS Memory Usage Estimate
+        run: |
+          echo "🔍 Estimating Node.js heap usage..."
+          MEM=$(node -e "const u=process.memoryUsage(); console.log(Math.round(u.heapUsed/1024/1024)+'MB');")
+          echo "  • Heap used: $MEM"
+          # No threshold here—just informative
+
+      - name: Simulate CPU Load
+        run: |
+          echo "🔧 Simulating CPU load for 30s..."
+          timeout 30s bash -c "while :; do :; done" || true
+          echo "  • CPU simulation done"
+
+      - name: Show Summary of Issues
+        run: |
+          echo "🏁 Summary of Issues:"
+          if [ -f warnings.txt ]; then
+            cat warnings.txt
+          else
+            echo "✅ No issues detected!"
+          fi
+
+      - name: Force Workflow Success
+        run: |
+          echo "✅ Workflow completed — no errors will stop it."
           exit 0
